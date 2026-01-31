@@ -1,0 +1,59 @@
+{
+  "server": {
+    "port": 18790,
+    "basePath": "/hooks"
+  },
+  "clawdbot": {
+    "sessionId": "bb-autonomy-main",
+    "agentId": "",
+    "timeoutSeconds": 55,
+    "reply": {
+      "channel": "line",
+      "target": "Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+  },
+  "queue": {
+    "maxPending": 200,
+    "dedupeTtlMs": 3600000
+  },
+  "sources": {
+    "slack": {
+      "enabled": true,
+      "signingSecretEnv": "SLACK_SIGNING_SECRET"
+    },
+    "github": {
+      "enabled": true,
+      "secretEnv": "GITHUB_WEBHOOK_SECRET"
+    },
+    "nocodb": {
+      "enabled": true,
+      "secretEnv": "NOCODB_WEBHOOK_SECRET"
+    },
+    "codex": {
+      "enabled": true,
+      "path": "/Users/ksato/workspace/shared/_codex",
+      "debounceMs": 5000,
+      "ignore": [".git", "node_modules"]
+    },
+    "gmail": {
+      "enabled": true,
+      "poll": {
+        "intervalMs": 120000,
+        "command": "",
+        "commands": [],
+        "accounts": [],
+        "commandTemplate": ""
+      }
+    },
+    "gcal": {
+      "enabled": true,
+      "poll": {
+        "intervalMs": 180000,
+        "command": "",
+        "commands": [],
+        "accounts": [],
+        "commandTemplate": ""
+      }
+    }
+  }
+}
