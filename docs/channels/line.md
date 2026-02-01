@@ -134,6 +134,23 @@ LINE IDs are case-sensitive. Valid IDs look like:
   animation while the agent works.
 - Media downloads are capped by `channels.line.mediaMaxMb` (default 10).
 
+## Conversation history
+
+The LINE plugin automatically maintains conversation history for each chat (user or
+group):
+
+- Incoming and outgoing messages are stored in memory (up to 100 messages per chat)
+- When a new message arrives, the last 20 messages are automatically included in the
+  AI's context as conversation history
+- History is preserved during the gateway session but cleared on restart
+- Each message in the history includes sender name, timestamp, and message content
+- This enables the AI to reference previous conversations and maintain context across
+  multiple exchanges
+
+**Note:** The LINE Messaging API does not provide an endpoint to retrieve historical
+messages. The plugin captures and stores messages as they arrive via webhook in
+real-time.
+
 ## Channel data (rich messages)
 
 Use `channelData.line` to send quick replies, locations, Flex cards, or template

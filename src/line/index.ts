@@ -7,6 +7,7 @@ export {
 export {
   monitorLineProvider,
   getLineRuntimeState,
+  getLineMessageHistory,
   type MonitorLineProviderOptions,
   type LineProviderMonitor,
 } from "./monitor.js";
