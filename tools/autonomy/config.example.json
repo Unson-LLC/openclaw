@@ -14,7 +14,8 @@
   },
   "queue": {
     "maxPending": 200,
-    "dedupeTtlMs": 3600000
+    "dedupeTtlMs": 3600000,
+    "lineCooldownMs": 30000
   },
   "sources": {
     "slack": {

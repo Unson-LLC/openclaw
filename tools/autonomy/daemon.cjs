@@ -12,6 +12,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
 
@@ -32,6 +33,7 @@ const DEFAULTS = {
   queue: {
     maxPending: 200,
     dedupeTtlMs: 60 * 60 * 1000,
+    lineCooldownMs: 0,
   },
   sources: {
     slack: { enabled: true, signingSecretEnv: 'SLACK_SIGNING_SECRET' },
@@ -59,6 +61,46 @@ const DEFAULTS = {
     },
   },
 };
+
+function resolveStateDir() {
+  const override = (process.env.OPENCLAW_STATE_DIR || process.env.CLAWDBOT_STATE_DIR || '').trim();
+  if (override) {
+    if (override.startsWith('~')) {
+      return path.resolve(override.replace(/^~(?=$|[\\/])/, os.homedir()));
+    }
+    return path.resolve(override);
+  }
+  const home = os.homedir();
+  const newDir = path.join(home, '.openclaw');
+  if (fs.existsSync(newDir)) return newDir;
+  const legacyDirs = [path.join(home, '.clawdbot'), path.join(home, '.moltbot'), path.join(home, '.moldbot')];
+  const existing = legacyDirs.find((dir) => fs.existsSync(dir));
+  return existing || newDir;
+}
+
+const LINE_ACTIVITY_PATH = path.join(resolveStateDir(), 'line-activity.json');
+
+function readLineActivity() {
+  try {
+    const raw = fs.readFileSync(LINE_ACTIVITY_PATH, 'utf8');
+    return JSON.parse(raw || '{}') || {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function getLastLineInboundAt(activity) {
+  if (!activity || typeof activity !== 'object') return 0;
+  if (typeof activity.lastInboundAt === 'number') return activity.lastInboundAt;
+  const accounts = activity.accounts || {};
+  let max = 0;
+  for (const entry of Object.values(accounts)) {
+    if (entry && typeof entry.lastInboundAt === 'number') {
+      max = Math.max(max, entry.lastInboundAt);
+    }
+  }
+  return max;
+}
 
 function deepMerge(base, override) {
   if (!override) return base;
@@ -211,6 +253,21 @@ async function processQueue(config) {
   if (running) return;
   const next = queue.shift();
   if (!next) return;
+  const lineCooldownMs = Number(config.queue?.lineCooldownMs ?? 0);
+  if (
+    lineCooldownMs > 0 &&
+    config.clawdbot?.reply?.channel === 'line'
+  ) {
+    const activity = readLineActivity();
+    const lastInboundAt = getLastLineInboundAt(activity);
+    const now = Date.now();
+    if (lastInboundAt && now - lastInboundAt < lineCooldownMs) {
+      const deferMs = Math.max(1000, lineCooldownMs - (now - lastInboundAt));
+      queue.unshift(next);
+      setTimeout(() => processQueue(config), deferMs);
+      return;
+    }
+  }
   running = true;
   try {
     await runClawdbot(next, config);
