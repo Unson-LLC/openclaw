@@ -49,7 +49,11 @@ export async function runCliAgent(params: {
   ownerNumbers?: string[];
   cliSessionId?: string;
   images?: ImageContent[];
+  forceNewSession?: boolean;
+  sessionRetryAttempt?: number;
 }): Promise<EmbeddedPiRunResult> {
+  const isSessionInUseError = (message: string) => /Session ID .*already in use/i.test(message);
+
   const started = Date.now();
   const resolvedWorkspace = resolveUserPath(params.workspaceDir);
   const workspaceDir = resolvedWorkspace;
@@ -106,12 +110,13 @@ export async function runCliAgent(params: {
     agentId: sessionAgentId,
   });
 
+  const effectiveCliSessionId = params.forceNewSession ? undefined : params.cliSessionId;
   const { sessionId: cliSessionIdToSend, isNew } = resolveSessionIdToSend({
     backend,
-    cliSessionId: params.cliSessionId,
+    cliSessionId: effectiveCliSessionId,
   });
   const useResume = Boolean(
-    params.cliSessionId &&
+    effectiveCliSessionId &&
     cliSessionIdToSend &&
     backend.resumeArgs &&
     backend.resumeArgs.length > 0,
@@ -286,10 +291,19 @@ export async function runCliAgent(params: {
       },
     };
   } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (!params.forceNewSession && effectiveCliSessionId && isSessionInUseError(message)) {
+      log.warn(`cli session busy; retrying with fresh session (provider=${params.provider})`);
+      return runCliAgent({
+        ...params,
+        cliSessionId: undefined,
+        forceNewSession: true,
+        sessionRetryAttempt: (params.sessionRetryAttempt ?? 0) + 1,
+      });
+    }
     if (err instanceof FailoverError) {
       throw err;
     }
-    const message = err instanceof Error ? err.message : String(err);
     if (isFailoverErrorMessage(message)) {
       const reason = classifyFailoverReason(message) ?? "unknown";
       const status = resolveFailoverStatus(reason);
