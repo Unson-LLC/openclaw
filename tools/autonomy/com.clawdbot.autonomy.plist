@@ -7,7 +7,7 @@
   <key>ProgramArguments</key>
   <array>
     <string>/usr/local/bin/node</string>
-    <string>/Users/ksato/workspace/projects/openclaw/tools/autonomy/daemon.js</string>
+    <string>/Users/ksato/workspace/projects/openclaw/tools/autonomy/daemon.cjs</string>
   </array>
   <key>WorkingDirectory</key>
   <string>/Users/ksato/workspace/projects/openclaw</string>

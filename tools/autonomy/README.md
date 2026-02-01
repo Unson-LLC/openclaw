@@ -30,7 +30,7 @@ Optional env secrets for webhook verification:
 ## 2) Start the daemon
 
 ```bash
-node tools/clawdbot-autonomy/daemon.js
+node tools/clawdbot-autonomy/daemon.cjs
 ```
 
 It will log endpoints, for example:
