@@ -18,6 +18,10 @@ export function isContextOverflowError(errorMessage?: string): boolean {
     return false;
   }
   const lower = errorMessage.toLowerCase();
+  const hasModelContextWindowExceededStopReason =
+    lower.includes("model_context_window_exceeded") ||
+    lower.includes("modelcontextwindowexceeded") ||
+    /\bmodel[_\s-]?context[_\s-]?window[_\s-]?exceeded\b/i.test(lower);
   const hasRequestSizeExceeds = lower.includes("request size exceeds");
   const hasContextWindow =
     lower.includes("context window") ||
@@ -30,6 +34,7 @@ export function isContextOverflowError(errorMessage?: string): boolean {
     lower.includes("maximum context length") ||
     lower.includes("prompt is too long") ||
     lower.includes("exceeds model context window") ||
+    hasModelContextWindowExceededStopReason ||
     (hasRequestSizeExceeds && hasContextWindow) ||
     lower.includes("context overflow:") ||
     (lower.includes("413") && lower.includes("too large"))

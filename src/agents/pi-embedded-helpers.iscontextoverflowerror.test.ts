@@ -34,6 +34,9 @@ describe("isContextOverflowError", () => {
       "request size exceeds model context window",
       '400 {"type":"error","error":{"type":"invalid_request_error","message":"Request size exceeds model context window"}}',
       "The request size exceeds model context window limit",
+      "Unhandled stop reason: model_context_window_exceeded",
+      "Unhandled stop reason: modelcontextwindowexceeded",
+      "Unhandled stop reason: model-context-window-exceeded",
     ];
     for (const sample of samples) {
       expect(isContextOverflowError(sample)).toBe(true);

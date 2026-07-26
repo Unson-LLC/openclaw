@@ -7,6 +7,7 @@ describe("isLikelyContextOverflowError", () => {
       "Model context window is 128k tokens, you requested 256k tokens",
       "Context window exceeded: requested 12000 tokens",
       "Prompt too large for this model",
+      "Unhandled stop reason: model_context_window_exceeded",
     ];
     for (const sample of samples) {
       expect(isLikelyContextOverflowError(sample)).toBe(true);
