@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { AnyAgentTool } from "./pi-tools.types.js";
 import { wrapToolWithAbortSignal } from "./pi-tools.abort.js";
 
 describe("wrapToolWithAbortSignal", () => {
@@ -8,7 +9,7 @@ describe("wrapToolWithAbortSignal", () => {
       {
         name: "exec",
         execute,
-      } as any,
+      } as unknown as AnyAgentTool,
       new AbortController().signal,
     );
     const runtimeSignal = {
@@ -30,7 +31,7 @@ describe("wrapToolWithAbortSignal", () => {
       {
         name: "read",
         execute,
-      } as any,
+      } as unknown as AnyAgentTool,
       new AbortController().signal,
     );
     const runtimeSignal = {
