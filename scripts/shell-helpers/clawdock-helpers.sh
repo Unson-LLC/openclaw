@@ -42,7 +42,7 @@ CLAWDOCK_CONFIG="${HOME}/.clawdock/config"
 CLAWDOCK_COMMON_PATHS=(
   "${HOME}/openclaw"
   "${HOME}/workspace/openclaw"
-  "${HOME}/projects/openclaw"
+  "${HOME}/workspace/repos/openclaw"
   "${HOME}/dev/openclaw"
   "${HOME}/code/openclaw"
   "${HOME}/src/openclaw"

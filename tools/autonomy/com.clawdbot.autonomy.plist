@@ -7,14 +7,14 @@
   <key>ProgramArguments</key>
   <array>
     <string>/usr/local/bin/node</string>
-    <string>/Users/ksato/workspace/projects/openclaw/tools/autonomy/daemon.cjs</string>
+    <string>/Users/ksato/workspace/repos/openclaw/tools/autonomy/daemon.cjs</string>
   </array>
   <key>WorkingDirectory</key>
-  <string>/Users/ksato/workspace/projects/openclaw</string>
+  <string>/Users/ksato/workspace/repos/openclaw</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>AUTONOMY_CONFIG</key>
-    <string>/Users/ksato/workspace/projects/openclaw/tools/autonomy/config.json</string>
+    <string>/Users/ksato/workspace/repos/openclaw/tools/autonomy/config.json</string>
     <key>CODEX_PATH</key>
     <string>/Users/ksato/workspace/shared/_codex</string>
     <key>CLAWDBOT_CLI_TOOLS_DISABLED</key>
