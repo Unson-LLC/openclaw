@@ -34,6 +34,9 @@ describe("isContextOverflowError", () => {
       "request size exceeds model context window",
       '400 {"type":"error","error":{"type":"invalid_request_error","message":"Request size exceeds model context window"}}',
       "The request size exceeds model context window limit",
+      "Unhandled stop reason: model_context_window_exceeded",
+      "Unhandled stop reason: modelcontextwindowexceeded",
+      "Unhandled stop reason: model-context-window-exceeded",
     ];
     for (const sample of samples) {
       expect(isContextOverflowError(sample)).toBe(true);
@@ -45,5 +48,13 @@ describe("isContextOverflowError", () => {
     expect(isContextOverflowError("request size exceeds upload limit")).toBe(false);
     expect(isContextOverflowError("model not found")).toBe(false);
     expect(isContextOverflowError("authentication failed")).toBe(false);
+  });
+
+  it("ignores normal conversation text mentioning context overflow", () => {
+    // These are legitimate conversation snippets, not error messages
+    expect(isContextOverflowError("Let's investigate the context overflow bug")).toBe(false);
+    expect(isContextOverflowError("The mystery context overflow errors are strange")).toBe(false);
+    expect(isContextOverflowError("We're debugging context overflow issues")).toBe(false);
+    expect(isContextOverflowError("Something is causing context overflow messages")).toBe(false);
   });
 });

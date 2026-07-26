@@ -3,13 +3,22 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import type { HistoryEntry } from "../auto-reply/reply/history.js";
 import type { OpenClawConfig } from "../config/config.js";
-import { danger, logVerbose } from "../globals.js";
 import type { RuntimeEnv } from "../runtime.js";
-import { createLineBot } from "./bot.js";
-import { validateLineSignature } from "./signature.js";
+import type { LineChannelData, ResolvedLineAccount } from "./types.js";
+import { resolveEffectiveMessagesConfig } from "../agents/identity.js";
+import { chunkMarkdownText } from "../auto-reply/chunk.js";
+import { appendHistoryEntry, buildHistoryContextFromMap } from "../auto-reply/reply/history.js";
+import { dispatchReplyWithBufferedBlockDispatcher } from "../auto-reply/reply/provider-dispatcher.js";
+import { createReplyPrefixOptions } from "../channels/reply-prefix.js";
+import { danger, logVerbose } from "../globals.js";
 import { normalizePluginHttpPath } from "../plugins/http-path.js";
 import { registerPluginHttpRoute } from "../plugins/http-registry.js";
+import { deliverLineAutoReply } from "./auto-reply-delivery.js";
+import { createLineBot } from "./bot.js";
+import { processLineMessage } from "./markdown-to-line.js";
+import { sendLineReplyChunks } from "./reply-chunks.js";
 import {
   replyMessageLine,
   showLoadingAnimation,
@@ -23,16 +32,8 @@ import {
   createImageMessage,
   createLocationMessage,
 } from "./send.js";
+import { validateLineSignature } from "./signature.js";
 import { buildTemplateMessageFromPayload } from "./template-messages.js";
-import type { LineChannelData, ResolvedLineAccount } from "./types.js";
-import { dispatchReplyWithBufferedBlockDispatcher } from "../auto-reply/reply/provider-dispatcher.js";
-import { resolveEffectiveMessagesConfig } from "../agents/identity.js";
-import { chunkMarkdownText } from "../auto-reply/chunk.js";
-import { processLineMessage } from "./markdown-to-line.js";
-import { sendLineReplyChunks } from "./reply-chunks.js";
-import { deliverLineAutoReply } from "./auto-reply-delivery.js";
-import type { HistoryEntry } from "../auto-reply/reply/history.js";
-import { appendHistoryEntry, buildHistoryContextFromMap } from "../auto-reply/reply/history.js";
 
 export interface MonitorLineProviderOptions {
   channelAccessToken: string;
@@ -413,12 +414,18 @@ export async function monitorLineProvider(
       let replyTokenUsed = false; // Track if we've used the one-time reply token
       try {
         const textLimit = 5000; // LINE max message length
+        const { onModelSelected, ...prefixOptions } = createReplyPrefixOptions({
+          cfg: config,
+          agentId: route.agentId,
+          channel: "line",
+          accountId: route.accountId,
+        });
 
         const { queuedFinal } = await dispatchReplyWithBufferedBlockDispatcher({
           ctx: contextWithHistory,
           cfg: config,
           dispatcherOptions: {
-            responsePrefix: resolveEffectiveMessagesConfig(config, route.agentId).responsePrefix,
+            ...prefixOptions,
             deliver: async (payload, _info) => {
               const lineData = (payload.channelData?.line as LineChannelData | undefined) ?? {};
 
@@ -485,7 +492,9 @@ export async function monitorLineProvider(
               runtime.error?.(danger(`line ${info.kind} reply failed: ${String(err)}`));
             },
           },
-          replyOptions: {},
+          replyOptions: {
+            onModelSelected,
+          },
         });
 
         if (!queuedFinal) {

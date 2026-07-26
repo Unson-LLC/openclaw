@@ -6,29 +6,62 @@ function throwAbortError(): never {
   throw err;
 }
 
+function isAbortSignal(obj: unknown): obj is AbortSignal {
+  return typeof AbortSignal !== "undefined" && obj instanceof AbortSignal;
+}
+
+function isAbortSignalLike(
+  obj: unknown,
+): obj is Pick<AbortSignal, "aborted" | "addEventListener" | "removeEventListener"> {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "aborted" in obj &&
+    typeof (obj as { addEventListener?: unknown }).addEventListener === "function"
+  );
+}
+
 function combineAbortSignals(a?: AbortSignal, b?: AbortSignal): AbortSignal | undefined {
-  if (!a && !b) {
+  const first = a as unknown;
+  const second = b as unknown;
+
+  if (!first && !second) {
     return undefined;
   }
-  if (a && !b) {
-    return a;
+  if (isAbortSignal(first) && !second) {
+    return first;
   }
-  if (b && !a) {
-    return b;
+  if (isAbortSignal(second) && !first) {
+    return second;
   }
-  if (a?.aborted) {
-    return a;
+  if (isAbortSignal(first) && first.aborted) {
+    return first;
   }
-  if (b?.aborted) {
-    return b;
+  if (isAbortSignal(second) && second.aborted) {
+    return second;
   }
-  if (typeof AbortSignal.any === "function") {
-    return AbortSignal.any([a as AbortSignal, b as AbortSignal]);
+  if (typeof AbortSignal.any === "function" && isAbortSignal(first) && isAbortSignal(second)) {
+    try {
+      return AbortSignal.any([first, second]);
+    } catch {
+      // Some runtimes may reject mixed-origin signals; fallback below handles that safely.
+    }
   }
+
   const controller = new AbortController();
   const onAbort = () => controller.abort();
-  a?.addEventListener("abort", onAbort, { once: true });
-  b?.addEventListener("abort", onAbort, { once: true });
+  const wireAbort = (signal: unknown) => {
+    if (!isAbortSignalLike(signal)) {
+      return;
+    }
+    if (signal.aborted) {
+      controller.abort();
+      return;
+    }
+    signal.addEventListener("abort", onAbort, { once: true });
+  };
+  wireAbort(first);
+  wireAbort(second);
   return controller.signal;
 }
 
