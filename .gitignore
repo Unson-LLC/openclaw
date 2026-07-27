@@ -78,11 +78,6 @@ USER.md
 # local tooling
 .serena/
 
-# Autonomy tooling (local config and logs)
-tools/autonomy/config.json
-tools/autonomy/events.log
-tools/autonomy/events.jsonl
-
 # Agent credentials and memory (NEVER COMMIT)
 /memory/
 .agent/*.json
